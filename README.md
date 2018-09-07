@@ -3,7 +3,7 @@
 - They teach us about how to organize the components, named [Component architecture](https://scrimba.com/p/pbNpTv/cm2a6f9), which is very helpful for developers' vision. 
 
 # Below, I noted down all the steps as I went through the tutorial
-### Step 1: Create components and import components in app.js
+## Step 1: Create components and import components in app.js
 - In app.js
 ```
 import React from 'react'
@@ -28,7 +28,7 @@ class App extends React.Component {
 export default App
 ```
 
-### Step 2: Build a basic MessageList.js
+## Step 2: Build a basic MessageList.js
 ```
 import React from 'react'
 
@@ -70,7 +70,7 @@ export default MessageList
 ```
 > // We cannot render 2 JSX div tags next to each other without a BIG div surrounding those 2 JSX because it will report error: Adjacent JSX elements must be wrapped in an enclosing tag => that is why we have div key={index} className="message" and /div wrapped around div className="message-username" and div className="message-text"
 
-### Step 3: How to use ChatKit and connect to ChatKit's API to fetch out messages from a given room
+## Step 3: How to use ChatKit and connect to ChatKit's API to fetch out messages from a given room
 - Go to https://pusher.com/
 - Product -> ChatKit -> Sign Up for the Public Beta
 - Create ChatKit with a name "SCRIMBA-CHATKIT-COURSE"
@@ -129,7 +129,7 @@ componentDidMount() {
 - This is what is look like after I played around with create users and add message to the room, named Random, that I created
 >![screen shot 2018-09-06 at 3 47 56 pm](https://user-images.githubusercontent.com/36870689/45186926-51593880-b1ec-11e8-9ae2-688947d16eba.png)
 
-### Step 4: State and Props
+## Step 4: State and Props
 - State is private for component (ex: it is only be state of the App component)
 - Prop is not private, is shared between components - and we cannot changed the props
 ```
@@ -228,7 +228,7 @@ class MessageList extends React.Component {
                 })}
 ```
 
-### Step 5: Create the Message component (Message.js)
+## Step 5: Create the Message component (Message.js)
 - Because we will need to move some contents from MessageList.js into Message.js. For example: 
 ```
 <div key={index} className="message">
@@ -294,3 +294,72 @@ function Message(props) {
 export default Message
 ```
 - To change a Class Component into a Functional Component, we will no longer need "extends React.Component" and "render()". We also do not need the this.
+
+## Step 6: SendMessageForm component (SendMessageForm.js)
+- The basic SendMessageForm.js should look like this at first:
+```
+import React from 'react'
+
+class SendMessageForm extends React.Component {
+    render() {
+        return (
+            <form className="send-message-form">
+                <input
+                    placeholder="Type your message and hit ENTER"
+                    type="text" />
+            </form>
+        )
+    }
+}
+
+export default SendMessageForm
+```
+- We will need to add onChange and value inside the input and onSubmit in the form
+```
+    onChange={this.handleChange}
+    value={this.state.message}
+```
+- After all, we will need to add handleChange and handleSubmit and binding them
+```
+import React from 'react'
+
+class SendMessageForm extends React.Component {
+    
+    constructor() {
+        super()
+        this.state = {
+            message: ''
+        }
+        this.handleChange = this.handleChange.bind(this)
+        this.handleSubmit = this.handleSubmit.bind(this)
+    }
+    
+    handleChange(e) {
+        this.setState({
+            message: e.target.value
+        })
+    }
+    
+    handleSubmit(e) {
+        e.preventDefault()
+        console.log(this.state.message)
+        /** send off the message */
+    }
+    
+    render() {
+        return (
+            <form
+                onSubmit={this.handleSubmit}
+                className="send-message-form">
+                <input
+                    onChange={this.handleChange}
+                    value={this.state.message}
+                    placeholder="Type your message and hit ENTER"
+                    type="text" />
+            </form>
+        )
+    }
+}
+
+export default SendMessageForm
+```

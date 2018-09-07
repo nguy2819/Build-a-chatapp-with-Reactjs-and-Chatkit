@@ -2,7 +2,7 @@
 - If you want to learn this tutorial, here is [the Scrimba's link](https://scrimba.com/g/greactchatkit).
 - They teach us about how to organize the components, named [Component architecture](https://scrimba.com/p/pbNpTv/cm2a6f9), which is very helpful for developers' vision. 
 
-## Below, I noted down all the steps as I went through the tutorial
+# Below, I noted down all the steps as I went through the tutorial
 ### Step 1: Create components and import components in app.js
 - In app.js
 ```
@@ -128,3 +128,102 @@ componentDidMount() {
 ```
 - This is what is look like after I played around with create users and add message to the room, named Random, that I created
 >![screen shot 2018-09-06 at 3 47 56 pm](https://user-images.githubusercontent.com/36870689/45186926-51593880-b1ec-11e8-9ae2-688947d16eba.png)
+
+### Step 4: State and Props
+- State is private for component (ex: it is only be state of the App component)
+- Prop is not private, is shared between components - and we cannot changed the props
+```
+constructor() {
+        super() //when we call super() -> we call the constructor function in the React.Component class
+        this.state = {
+            messages: []
+        }
+    } 
+```
+- Now we can add this.setState inside the function .then
+```
+this.setState({
+    messages: [...this.state.messages, message]
+})
+```
+- Then we pass the prop -> because when we pass state from the top to render, it will turn into prop
+```
+<MessageList messages={this.state.messages} />
+```
+- The app.js will look like this: 
+```
+class App extends React.Component {
+    
+    constructor() {
+        super()
+        this.state = {
+            messages: []
+        }
+    } 
+    
+    componentDidMount() {
+        const chatManager = new Chatkit.ChatManager({
+            instanceLocator,
+            userId: 'perborgen',
+            tokenProvider: new Chatkit.TokenProvider({
+                url: tokenUrl
+            })
+        })
+        
+        chatManager.connect()
+        .then(currentUser => {
+            currentUser.subscribeToRoom({
+                roomId: 9434230,
+                hooks: {
+                    onNewMessage: message => {
+                        this.setState({
+                            messages: [...this.state.messages, message]
+                        })
+                    }
+                }
+            })
+        })
+    }
+    
+    render() {
+        return (
+            <div className="app">
+                <RoomList />
+                <MessageList messages={this.state.messages} />
+                <SendMessageForm />
+                <NewRoomForm />
+            </div>
+        );
+    }
+}
+```
+- And obviously, we need to pass the prop inside MessageList.js so that everytime the message changes, they will rerender the MessageList.js, so the MessageList.js will look like this (no longer passing the DUMMY_DATA)
+```
+class MessageList extends React.Component {
+    render() {
+        return (
+            <div className="message-list">
+                {this.props.messages.map((message, index) => {
+                    return (
+                        <div key={index} className="message">
+                            <div className="message-username">{message.senderId}</div>
+                            <div className="message-text">{message.text}</div>
+                        </div>
+                    )
+                })}
+            </div>
+        )
+    }
+}
+```
+- What we changed in the MessageList.js is DUMMY_DATA.map to this.props.messages.map
+```
+                {DUMMY_DATA.map((message, index) => {
+                    return (
+                        <div key={index} className="message"> //each child needs to have a unique "key" prop
+                            <div className="message-username">{message.senderId}</div>
+                            <div className="message-text">{message.text}</div>
+                        </div>
+                    )
+                })}
+```

@@ -227,3 +227,70 @@ class MessageList extends React.Component {
                     )
                 })}
 ```
+
+### Step 5: Create the Message component (Message.js)
+- Because we will need to move some contents from MessageList.js into Message.js. For example: 
+```
+<div key={index} className="message">
+    <div className="message-username">{message.senderId}</div>
+    <div className="message-text">{message.text}</div>
+</div>
+```
+- But first, don't forget to import Message.js into MessageList.js and render <Message /> outto MessageList.js
+- So literally, we replace the whole div contents above with <Message />
+- So the MessageList.js will look like this:
+```
+import React from 'react'
+import Message from './Message'
+
+class MessageList extends React.Component {
+    render() {
+        return (
+            <div className="message-list">
+                {this.props.messages.map((message, index) => {
+                    return (
+                        <Message key={index} username={message.senderId} text={message.text} />
+                    )
+                })}
+            </div>
+        )
+    }
+}
+
+export default MessageList
+```
+- So when we moved the div contents for message.senderID and message.text from MessageList.js over to Message.js, we will need to change to this.props.username (which is linked to MessageList.js) and this.props.text
+- And the Message.js will look like this:
+```
+import React from 'react'
+
+class Message extends React.Component {  
+    render() {
+        return (
+            <div className="message">
+                <div className="message-username">{this.props.username}</div>
+                <div className="message-text">{this.props.text}</div>
+            </div>
+        )
+    }
+}
+
+export default Message
+```
+- Check out this link to learn about [FUNCTIONAL COMPONENT](https://reactjs.org/docs/components-and-props.html)
+- We can also change the "Class Component" into "Functional Component" and the Message.js under Functional Component will look like this:
+```
+import React from 'react'
+
+function Message(props) {  
+    return (
+        <div className="message">
+            <div className="message-username">{props.username}</div>
+            <div className="message-text">{props.text}</div>
+        </div>
+    )
+}
+
+export default Message
+```
+- To change a Class Component into a Functional Component, we will no longer need "extends React.Component" and "render()". We also do not need the this.

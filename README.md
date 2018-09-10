@@ -521,3 +521,131 @@ class App extends React.Component {
     }
 }
 ```
+
+## Step 8: RoomList Component (RoomList.js)
+```
+this.currentUser.getJoinableRooms()
+```
+- This will return a promise, all under chatManager.connect
+```
+.then(joinableRooms => {
+                this.setState({
+                    joinableRooms,
+                    joinedRooms: this.currentUser.rooms
+                })
+            })
+            .catch(err => console.log('error on joinableRooms: ', errr))
+```
+- We cannot forget to add joinableRooms and joinedRooms in constructor:
+```
+constructor() {
+        super()
+        this.state = {
+            messages: [],
+            joinableRooms: [],
+            joinedRooms: []
+        }
+        this.sendMessage = this.sendMessage.bind(this)
+    } 
+```
+- And edit RoomList under render
+```
+<RoomList rooms={[...this.state.joinableRooms, ...this.state.joinedRooms]} />
+```
+- App.js will look like this now:
+```
+class App extends React.Component {
+    
+    constructor() {
+        super()
+        this.state = {
+            messages: [],
+            joinableRooms: [],
+            joinedRooms: []
+        }
+        this.sendMessage = this.sendMessage.bind(this)
+    } 
+    
+    componentDidMount() {
+        const chatManager = new Chatkit.ChatManager({
+            instanceLocator,
+            userId: 'perborgen',
+            tokenProvider: new Chatkit.TokenProvider({
+                url: tokenUrl
+            })
+        })
+        
+        chatManager.connect()
+        .then(currentUser => {
+            this.currentUser = currentUser
+            
+            this.currentUser.getJoinableRooms()
+            .then(joinableRooms => {
+                this.setState({
+                    joinableRooms,
+                    joinedRooms: this.currentUser.rooms
+                })
+            })
+            .catch(err => console.log('error on joinableRooms: ', errr))
+            
+            this.currentUser.subscribeToRoom({
+                roomId: 9434230,
+                hooks: {
+                    onNewMessage: message => {
+                        this.setState({
+                            messages: [...this.state.messages, message]
+                        })
+                    }
+                }
+            })
+        })
+        .catch(err => console.log('error on connecting: ', errr))
+
+    }
+    
+    sendMessage(text) {
+        this.currentUser.sendMessage({
+            text,
+            roomId: 9434230
+        })
+    }
+    
+    render() {
+        return (
+            <div className="app">
+                <RoomList rooms={[...this.state.joinableRooms, ...this.state.joinedRooms]} />
+                <MessageList messages={this.state.messages} />
+                <SendMessageForm sendMessage={this.sendMessage} />
+                <NewRoomForm />
+            </div>
+        );
+    }
+}
+```
+- RoomList.js will look like this:
+```
+import React from 'react'
+
+class RoomList extends React.Component {
+    render () {
+        return (
+            <div className="rooms-list">
+                <ul>
+                <h3>Your rooms:</h3>
+                    {this.props.rooms.map(room => {
+                        return (
+                            <li key={room.id} className="room">
+                                <a href="#"># {room.name}</a>
+                            </li>
+                        )
+                    })}
+                </ul>
+            </div>
+        )
+    }
+}
+
+export default RoomList
+```
+> ![screen shot 2018-09-10 at 10 23 12 am](https://user-images.githubusercontent.com/36870689/45310489-9b3f6880-b4e3-11e8-9c71-076f90ed7eb9.png)
+

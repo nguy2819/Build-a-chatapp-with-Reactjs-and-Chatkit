@@ -363,3 +363,161 @@ class SendMessageForm extends React.Component {
 
 export default SendMessageForm
 ```
+
+## Step 7: Broadcasting Messages
+- As we noticed, in app.js, the interaction with ChatKit API - happens through this "currentUser" object - which we got access through the "componentDidMount" method and after we got connect with the "chatManager".
+- However, it is only available in the "currentUser" scope and that's not good => because we want it to be available in entire "componentDidMount" instance. 
+```
+componentDidMount() {
+        const chatManager = new Chatkit.ChatManager({
+            instanceLocator,
+            userId: 'perborgen',
+            tokenProvider: new Chatkit.TokenProvider({
+                url: tokenUrl
+            })
+        })
+        
+        chatManager.connect()
+        .then(currentUser => {
+            currentUser.subscribeToRoom({
+                roomId: 9434230,
+                hooks: {
+                    onNewMessage: message => {
+                        this.setState({
+                            messages: [...this.state.messages, message]
+                        })
+                    }
+                }
+            })
+        })
+    }
+```
+- In the future, we will do the "currentUser.sendMessage" - in order to sendMessage. To do that, we need to type: (Simply, we hooke the currentUser with the component itself)
+```
+this.currentUser = currentUser
+```
+- After that we can create a new Method, called sendMessage(){}: (It's only possible when when we hooke the currentUser with itself component)
+```
+sendMessage(text) {
+        this.currentUser.sendMessage({
+            text,
+            roodId: 9434230
+        })
+    }
+```
+- Obviously, we cannot forget to bind them under constructor
+```
+this.sendMessage = this.sendMessage.bind(this)
+```
+- Finally, we need to link the child component with its parents. sendMessageForm will get access through the sendMessage(text){}
+```
+<SendMessageForm sendMessage={this.sendMessage} />
+```
+- In SendMessageForm.js, we ned to add under handleSubmit(e)
+```
+this.props.sendMessage(this.state.message)
+this.setState({
+            message: ''
+        })
+```
+- The SendMessageForm.js needs to look like this: 
+```import React from 'react'
+
+class SendMessageForm extends React.Component {
+    
+    constructor() {
+        super()
+        this.state = {
+            message: ''
+        }
+        this.handleChange = this.handleChange.bind(this)
+        this.handleSubmit = this.handleSubmit.bind(this)
+    }
+    
+    handleChange(e) {
+        this.setState({
+            message: e.target.value
+        })
+    }
+    
+    handleSubmit(e) {
+        e.preventDefault()
+        this.props.sendMessage(this.state.message)
+        this.setState({
+            message: ''
+        })
+    }
+    
+    render() {
+        return (
+            <form
+                onSubmit={this.handleSubmit}
+                className="send-message-form">
+                <input
+                    onChange={this.handleChange}
+                    value={this.state.message}
+                    placeholder="Type your message and hit ENTER"
+                    type="text" />
+            </form>
+        )
+    }
+}
+
+export default SendMessageForm
+```
+- And App.js needs to look like this:
+```
+class App extends React.Component {
+    
+    constructor() {
+        super()
+        this.state = {
+            messages: []
+        }
+        this.sendMessage = this.sendMessage.bind(this)
+    } 
+    
+    componentDidMount() {
+        const chatManager = new Chatkit.ChatManager({
+            instanceLocator,
+            userId: 'perborgen',
+            tokenProvider: new Chatkit.TokenProvider({
+                url: tokenUrl
+            })
+        })
+        
+        chatManager.connect()
+        .then(currentUser => {
+            this.currentUser = currentUser
+            this.currentUser.subscribeToRoom({
+                roomId: 9434230,
+                hooks: {
+                    onNewMessage: message => {
+                        this.setState({
+                            messages: [...this.state.messages, message]
+                        })
+                    }
+                }
+            })
+        })
+    }
+    
+    sendMessage(text) {
+        this.currentUser.sendMessage({
+            text,
+            roomId: 9434230
+        })
+    }
+    
+    render() {
+        return (
+            <div className="app">
+                <RoomList />
+                <MessageList messages={this.state.messages} />
+                <SendMessageForm sendMessage={this.sendMessage} />
+                <NewRoomForm />
+            </div>
+        );
+    }
+}
+```

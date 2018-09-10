@@ -649,3 +649,154 @@ export default RoomList
 ```
 > ![screen shot 2018-09-10 at 10 23 12 am](https://user-images.githubusercontent.com/36870689/45310489-9b3f6880-b4e3-11e8-9c71-076f90ed7eb9.png)
 
+## Step 9: Subcribe to rooms
+- So in the past, we're still subscribe to a specific room (ex: roomId: 9434230)
+- To able to clikc on the room we want, we will create a subscribeToRoom and bind them with the constructor
+```
+subscribeToRoom() {
+        this.currentUser.subscribeToRoom({
+            roomId: 9434230,
+            hooks: {
+                onNewMessage: message => {
+                    this.setState({
+                        messages: [...this.state.messages, message]
+                    })
+                }
+            }
+        })
+    }
+```
+```
+        this.subscribeToRoom = this.subscribeToRoom.bind(this)
+```
+- Also make the getRoom() by pulling this.currentUser.getJoinableRooms() into it
+```
+getRooms() {
+        this.currentUser.getJoinableRooms()
+        .then(joinableRooms => {
+            this.setState({
+                joinableRooms,
+                joinedRooms: this.currentUser.rooms
+            })
+        })
+        .catch(err => console.log('error on joinableRooms: ', errr))
+    }
+```
+- Also, don't forget to bind the getRoom() with constructor
+```
+        this.getRooms = this.getRooms.bind(this)
+```
+- The "componentDidMount" will be really organized after we pull subscribeToRoom() and getRooms() out as seperate and also changed the roomID inside "subscribeToRoom()". Plus, also delete this.subscribeToRoom() out of "chatManager.connect()"
+```
+class App extends React.Component {
+    
+    constructor() {
+        super()
+        this.state = {
+            roomId: null,
+            messages: [],
+            joinableRooms: [],
+            joinedRooms: []
+        }
+        this.sendMessage = this.sendMessage.bind(this)
+        this.subscribeToRoom = this.subscribeToRoom.bind(this)
+        this.getRooms = this.getRooms.bind(this)
+    } 
+    
+    componentDidMount() {
+        const chatManager = new Chatkit.ChatManager({
+            instanceLocator,
+            userId: 'perborgen',
+            tokenProvider: new Chatkit.TokenProvider({
+                url: tokenUrl
+            })
+        })
+        
+        chatManager.connect()
+        .then(currentUser => {
+            this.currentUser = currentUser
+            this.getRooms()
+            //this.subscribeToRoom() //delete this line
+        })
+        .catch(err => console.log('error on connecting: ', errr))
+    }
+    
+    getRooms() {
+        this.currentUser.getJoinableRooms()
+        .then(joinableRooms => {
+            this.setState({
+                joinableRooms,
+                joinedRooms: this.currentUser.rooms
+            })
+        })
+        .catch(err => console.log('error on joinableRooms: ', errr))
+    }
+    
+    subscribeToRoom(roomID) {
+        this.setState({ messages: [] }) //added this line to clean up the state
+        this.currentUser.subscribeToRoom({
+            roomId: roomID,
+            hooks: {
+                onNewMessage: message => {
+                    this.setState({
+                        messages: [...this.state.messages, message]
+                    })
+                }
+            }
+        })
+       .then(room => {
+            this.setState({
+                roomId: room.id
+            })
+            this.getRooms()
+        })
+        .catch(err => console.log('error on subscribing to room: ', err))
+    }
+    
+    sendMessage(text) {
+        this.currentUser.sendMessage({
+            text,
+            roomId: this.state.roomId
+        })
+    }
+    
+    render() {
+        return (
+            <div className="app">
+                <RoomList
+                    subscribeToRoom={this.subscribeToRoom}
+                    rooms={[...this.state.joinableRooms, ...this.state.joinedRooms]} />
+                <MessageList messages={this.state.messages} />
+                <SendMessageForm sendMessage={this.sendMessage} />
+                <NewRoomForm />
+            </div>
+        );
+    }
+}
+```
+- The code above did edit the RoomList under render by adding subscribeToRoom in it. 
+- The RoomList.js will look like this after added the "onClick" with this.props.subscribeToRoom(room.id)
+```
+class RoomList extends React.Component {
+    render () {
+        return (
+            <div className="rooms-list">
+                <ul>
+                <h3>Your rooms:</h3>
+                    {this.props.rooms.map(room => {
+                        return (
+                            <li key={room.id} className="room">
+                                <a
+                                    onClick={() => this.props.subscribeToRoom(room.id)}
+                                    href="#">
+                                    # {room.name}
+                                </a>
+                            </li>
+                        )
+                    })}
+                </ul>
+            </div>
+        )
+    }
+}
+```
